@@ -119,4 +119,4 @@ jobs:
 
           docker buildx imagetools inspect \
             --raw "${REGISTRY_IMAGE}:${SHORT_SHA}" | \
-            jq -e '[.manifests[].platform | .os + "/" + .architecture] | sort == ["linux/amd64", "linux/arm64"]'
+            jq -e '[.manifests[].platform | select(.os == "linux") | .os + "/" + .architecture] | sort == ["linux/amd64", "linux/arm64"]'
