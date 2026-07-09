@@ -20,11 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /open5gs
 COPY . /open5gs
 
-RUN mkdir -p subprojects/prometheus-client-c && \
-    test -f subprojects/prometheus-client-c/README.md || \
-    printf 'prometheus-client-c\n' > subprojects/prometheus-client-c/README.md
-
 RUN rm -rf build && \
+    rm -rf subprojects/prometheus-client-c && \
+    meson subprojects download prometheus-client-c && \
     meson setup build --prefix=/open5gs/install --buildtype=release && \
     ninja -C build install && \
     mkdir -p /var/log/open5gs /opt/open5gs/bin
