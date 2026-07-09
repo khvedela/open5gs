@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /open5gs
 COPY . /open5gs
 
-RUN test -f subprojects/prometheus-client-c/README.md || \
+RUN mkdir -p subprojects/prometheus-client-c && \
+    test -f subprojects/prometheus-client-c/README.md || \
     printf 'prometheus-client-c\n' > subprojects/prometheus-client-c/README.md
 
 RUN rm -rf build && \
