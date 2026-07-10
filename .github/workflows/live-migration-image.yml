@@ -101,10 +101,11 @@ jobs:
 
       - name: Create and verify image manifest
         env:
-          SHORT_SHA: ${{ github.sha }}
+          COMMIT_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
         run: |
           set -euo pipefail
-          SHORT_SHA="${SHORT_SHA:0:9}"
           cd /tmp/digests
 
           sources=()
@@ -112,11 +113,25 @@ jobs:
             sources+=("${REGISTRY_IMAGE}@sha256:${digest}")
           done
 
-          docker buildx imagetools create \
-            --tag "${REGISTRY_IMAGE}:${SHORT_SHA}" \
-            --tag "${REGISTRY_IMAGE}:main" \
-            "${sources[@]}"
+          tags=(--tag "${REGISTRY_IMAGE}:${COMMIT_SHA}")
+          if [[ "${EVENT_NAME}" == "push" && "${GIT_REF}" == "refs/heads/main" ]]; then
+            short_sha="${COMMIT_SHA:0:9}"
+            tags+=(--tag "${REGISTRY_IMAGE}:${short_sha}")
+            tags+=(--tag "${REGISTRY_IMAGE}:main")
+          fi
+
+          docker buildx imagetools create "${tags[@]}" "${sources[@]}"
 
           docker buildx imagetools inspect \
-            --raw "${REGISTRY_IMAGE}:${SHORT_SHA}" | \
+            --raw "${REGISTRY_IMAGE}:${COMMIT_SHA}" | \
             jq -e '[.manifests[].platform | select(.os == "linux") | .os + "/" + .architecture] | sort == ["linux/amd64", "linux/arm64"]'
+
+          manifest_digest=$(docker buildx imagetools inspect \
+            "${REGISTRY_IMAGE}:${COMMIT_SHA}" | awk '/^Digest:/ {print $2}')
+          {
+            echo "### Open5GS live-migration image"
+            echo
+            echo "- Commit: \`${COMMIT_SHA}\`"
+            echo "- Candidate: \`${REGISTRY_IMAGE}:${COMMIT_SHA}\`"
+            echo "- Digest: \`${manifest_digest}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

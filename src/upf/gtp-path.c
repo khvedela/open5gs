@@ -217,17 +217,14 @@ static void _gtpv1_tun_recv_common_cb(
                 pdr, OGS_GTPU_MSGTYPE_GPDU, 0, NULL, recvbuf, &report));
 
     /*
-     * Issue #2210, Discussion #2208, #2209
-     *
-     * Metrics reduce data plane performance.
-     * It should not be used on the UPF/SGW-U data plane
-     * until this issue is resolved.
+     * Updating the Prometheus client on every packet has a measurable data
+     * plane cost. Keep this opt-in, and only update the two global counters
+     * needed for per-UPF N3 packet-rate telemetry. The more expensive QFI
+     * hash lookup remains outside the packet path.
      */
-#if 0
-    upf_metrics_inst_global_inc(UPF_METR_GLOB_CTR_GTP_OUTDATAPKTN3UPF);
-    upf_metrics_inst_by_qfi_add(pdr->qer->qfi,
-        UPF_METR_CTR_GTP_OUTDATAVOLUMEQOSLEVELN3UPF, recvbuf->len);
-#endif
+    if (ogs_metrics_self()->data_plane_packet_counters)
+        upf_metrics_inst_global_inc(
+                UPF_METR_GLOB_CTR_GTP_OUTDATAPKTN3UPF);
 
     if (report.type.downlink_data_report) {
         ogs_assert(pdr->sess);
@@ -388,18 +385,10 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
         ip_h = (struct ip *)pkbuf->data;
         ogs_assert(ip_h);
 
-        /*
-         * Issue #2210, Discussion #2208, #2209
-         *
-         * Metrics reduce data plane performance.
-         * It should not be used on the UPF/SGW-U data plane
-         * until this issue is resolved.
-         */
-#if 0
-        upf_metrics_inst_global_inc(UPF_METR_GLOB_CTR_GTP_INDATAPKTN3UPF);
-        upf_metrics_inst_by_qfi_add(header_desc.qos_flow_identifier,
-                UPF_METR_CTR_GTP_INDATAVOLUMEQOSLEVELN3UPF, pkbuf->len);
-#endif
+        /* See the downlink path above for the opt-in performance contract. */
+        if (ogs_metrics_self()->data_plane_packet_counters)
+            upf_metrics_inst_global_inc(
+                    UPF_METR_GLOB_CTR_GTP_INDATAPKTN3UPF);
 
         pfcp_object = ogs_pfcp_object_find_by_teid(header_desc.teid);
         if (!pfcp_object) {

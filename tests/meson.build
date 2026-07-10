@@ -39,3 +39,8 @@ test('testbed-api-contracts',
     python3,
     args : [files('testbed-api-contracts.py')],
     suite: 'unit')
+
+test('upf-metrics-contracts',
+    python3,
+    args : [files('upf-metrics-contracts.py')],
+    suite: 'unit')

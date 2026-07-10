@@ -41,6 +41,7 @@ typedef struct ogs_metrics_context_s {
     ogs_list_t  spec_list;
 
     uint16_t    metrics_port;
+    bool        data_plane_packet_counters;
 
     /* custom endpoints */
     ogs_list_t custom_eps;
