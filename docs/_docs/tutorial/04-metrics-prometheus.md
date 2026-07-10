@@ -12,8 +12,9 @@ When this method is used, any open5gs program exporting metrics becomes a
 Prometheus server, which is basically an HTTP server serving Prometheus data to
 the Prometheus scrapper.
 
-Note: AMF, MME and SMF support exporting metrics so far, though other may
-hopefully follow soon.
+Note: AMF, MME, SMF and UPF support exporting metrics. UPF packet-path
+counters are opt-in because updating a Prometheus counter for every packet has
+a measurable data-plane cost.
 
 #### 1. Enable Prometheus support during build
 
@@ -66,7 +67,38 @@ Note: You may want to change the default IP address or port if you are running
 the Prometheus scrapper in the same host, since it will also spawn its own
 Prometheus server also in port 9090, which will collide.
 
-#### 3. Manual visualization
+#### 3. UPF N3 packet counters
+
+The UPF defines two monotonic application counters:
+
+* `fivegs_ep_n3_gtp_indatapktn3upf` counts incoming GTP-U data packets on N3.
+* `fivegs_ep_n3_gtp_outdatapktn3upf` counts outgoing GTP-U data packets on N3.
+
+They remain at zero unless packet-path instrumentation is explicitly enabled.
+Enable it only on UPFs where its overhead has been measured and accepted:
+
+```
+upf:
+  metrics:
+    data_plane_packet_counters: true
+    server:
+      - address: 127.0.0.7
+        port: 9090
+```
+
+The default is `false`. Enabling the option logs a startup warning. Only the
+two global N3 counters are updated; per-QFI metrics remain outside the hot path.
+Derive packet rates in Prometheus, for example:
+
+```
+rate(fivegs_ep_n3_gtp_indatapktn3upf[30s])
+rate(fivegs_ep_n3_gtp_outdatapktn3upf[30s])
+```
+
+These counters do not represent application bytes, packet drops, or latency.
+Do not infer those signals from them.
+
+#### 4. Manual visualization
 
 Simply open the web browser at the following URL (changing IP address and port
 as configured in previous section):
@@ -107,7 +139,7 @@ process_start_time_seconds 402433
 process_open_fds 23
 ```
 
-#### 3. Integration with Prometheus scrapper
+#### 5. Integration with Prometheus scrapper
 
 Sample Prometheus scrapper configuration (`~/prometheus.yml`):
 ```
