@@ -127,7 +127,7 @@ jobs:
             jq -e '[.manifests[].platform | select(.os == "linux") | .os + "/" + .architecture] | sort == ["linux/amd64", "linux/arm64"]'
 
           manifest_digest=$(docker buildx imagetools inspect \
-            "${REGISTRY_IMAGE}:${COMMIT_SHA}" | awk '/^Digest:/ {print $2; exit}')
+            "${REGISTRY_IMAGE}:${COMMIT_SHA}" | awk '/^Digest:/ {print $2}')
           {
             echo "### Open5GS live-migration image"
             echo
