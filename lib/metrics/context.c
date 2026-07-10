@@ -89,6 +89,7 @@ ogs_metrics_context_t *ogs_metrics_self(void)
 static int ogs_metrics_context_prepare(void)
 {
     self.metrics_port = DEFAULT_PROMETHEUS_HTTP_PORT;
+    self.data_plane_packet_counters = false;
 
     return OGS_OK;
 }
@@ -203,7 +204,11 @@ int ogs_metrics_context_parse_config(const char *local)
                         const char *metrics_key =
                             ogs_yaml_iter_key(&metrics_iter);
                         ogs_assert(metrics_key);
-                        if (!strcmp(metrics_key, "server")) {
+                        if (!strcmp(metrics_key,
+                                    "data_plane_packet_counters")) {
+                            self.data_plane_packet_counters =
+                                ogs_yaml_iter_bool(&metrics_iter);
+                        } else if (!strcmp(metrics_key, "server")) {
                             ogs_list_t list, list6;
                             ogs_socknode_t *node = NULL, *node6 = NULL;
 

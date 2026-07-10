@@ -60,6 +60,10 @@ int upf_initialize(void)
     rv = ogs_metrics_context_parse_config(APP_NAME);
     if (rv != OGS_OK) return rv;
 
+    if (ogs_metrics_self()->data_plane_packet_counters)
+        ogs_warn("N3 data-plane packet counters are enabled; "
+                "measure packet-path overhead before production use");
+
     rv = upf_context_parse_config();
     if (rv != OGS_OK) return rv;
 
