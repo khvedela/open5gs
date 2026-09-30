@@ -302,6 +302,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
 
     gtp_h = (ogs_gtp2_header_t *)pkbuf->data;
     if (gtp_h->version != OGS_GTP2_VERSION_1) {
+        upf_metrics_inst_global_inc(
+                UPF_METR_GLOB_CTR_GTPU_MALFORMED_PACKETS);
         ogs_error("[DROP] Invalid GTPU version [%d]", gtp_h->version);
         ogs_log_hexdump(OGS_LOG_ERROR, pkbuf->data, pkbuf->len);
         goto cleanup;
@@ -309,6 +311,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
 
     len = ogs_gtpu_parse_header(&header_desc, pkbuf);
     if (len < 0) {
+        upf_metrics_inst_global_inc(
+                UPF_METR_GLOB_CTR_GTPU_MALFORMED_PACKETS);
         ogs_error("[DROP] Cannot decode GTPU packet");
         ogs_log_hexdump(OGS_LOG_ERROR, pkbuf->data, pkbuf->len);
         goto cleanup;
@@ -316,6 +320,7 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
     if (header_desc.type == OGS_GTPU_MSGTYPE_ECHO_REQ) {
         ogs_pkbuf_t *echo_rsp;
 
+        upf_metrics_inst_global_inc(UPF_METR_GLOB_CTR_GTPU_ECHO_REQUESTS);
         ogs_info("[RECV] Echo Request from [%s]", OGS_ADDR(&from, buf1));
         echo_rsp = ogs_gtp2_handle_echo_req(pkbuf);
         ogs_expect(echo_rsp);
@@ -329,6 +334,9 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
             if (sent < 0 || sent != echo_rsp->len) {
                 ogs_log_message(OGS_LOG_ERROR, ogs_socket_errno,
                         "ogs_sendto() failed");
+            } else {
+                upf_metrics_inst_global_inc(
+                        UPF_METR_GLOB_CTR_GTPU_ECHO_RESPONSES_SENT);
             }
             ogs_pkbuf_free(echo_rsp);
         }
@@ -336,6 +344,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
     }
     if (header_desc.type != OGS_GTPU_MSGTYPE_END_MARKER &&
         pkbuf->len <= len) {
+        upf_metrics_inst_global_inc(
+                UPF_METR_GLOB_CTR_GTPU_MALFORMED_PACKETS);
         ogs_error("[DROP] Small GTPU packet(type:%d len:%d)",
                 header_desc.type, len);
         ogs_log_hexdump(OGS_LOG_ERROR, pkbuf->data, pkbuf->len);
@@ -403,6 +413,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
 
         pfcp_object = ogs_pfcp_object_find_by_teid(header_desc.teid);
         if (!pfcp_object) {
+            upf_metrics_inst_global_inc(
+                    UPF_METR_GLOB_CTR_GTPU_UNKNOWN_TEID_PACKETS);
             /*
              * TS23.527 Restoration procedures
              * 4.3 UPF Restoration Procedures
@@ -423,6 +435,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
                 ogs_gtp1_send_error_indication(
                         sock, header_desc.teid,
                         header_desc.qos_flow_identifier, &from);
+                upf_metrics_inst_global_inc(
+                        UPF_METR_GLOB_CTR_GTPU_ERROR_INDICATIONS_TRIGGERED);
             }
             goto cleanup;
         }
@@ -475,6 +489,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
             }
 
             if (!pdr) {
+                upf_metrics_inst_global_inc(
+                        UPF_METR_GLOB_CTR_GTPU_UNMATCHED_PDR_PACKETS);
                 /*
                  * TS23.527 Restoration procedures
                  * 4.3 UPF Restoration Procedures
@@ -496,6 +512,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
                     ogs_gtp1_send_error_indication(
                             sock, header_desc.teid,
                             header_desc.qos_flow_identifier, &from);
+                    upf_metrics_inst_global_inc(
+                            UPF_METR_GLOB_CTR_GTPU_ERROR_INDICATIONS_TRIGGERED);
                 }
                 goto cleanup;
             }
@@ -608,6 +626,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
                 } else if (check_framed_routes(sess, AF_INET, src_addr)) {
                     /* Or source IP address should match a framed route */
                 } else {
+                    upf_metrics_inst_global_inc(
+                            UPF_METR_GLOB_CTR_GTPU_SOURCE_SPOOFING_DROPS);
                     ogs_error("[DROP] Source IP-%d Spoofing APN:%s SrcIf:%d DstIf:%d TEID:0x%x",
                                 ip_h->ip_v, pdr->dnn, pdr->src_if, far->dst_if, header_desc.teid);
                     ogs_error("       SRC:%08X, UE:%08X",
@@ -672,6 +692,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
                 } else if (check_framed_routes(sess, AF_INET6, src_addr)) {
                     /* Or source IP address should match a framed route */
                 } else {
+                    upf_metrics_inst_global_inc(
+                            UPF_METR_GLOB_CTR_GTPU_SOURCE_SPOOFING_DROPS);
                     ogs_error("[DROP] Source IP-%d Spoofing APN:%s SrcIf:%d DstIf:%d TEID:0x%x",
                                 ip_h->ip_v, pdr->dnn, pdr->src_if, far->dst_if, header_desc.teid);
                     ogs_error("SRC:%08x %08x %08x %08x",
@@ -885,6 +907,8 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
             return;
         }
     } else {
+        upf_metrics_inst_global_inc(
+                UPF_METR_GLOB_CTR_GTPU_MALFORMED_PACKETS);
         ogs_error("[DROP] Invalid GTPU Type [%d]", header_desc.type);
         ogs_log_hexdump(OGS_LOG_ERROR, pkbuf->data, pkbuf->len);
     }

@@ -61,6 +61,41 @@ upf_metrics_spec_def_t upf_metrics_spec_def_global[_UPF_METR_GLOB_MAX] = {
     .name = "fivegs_ep_n3_gtp_outdatapktn3upf",
     .description = "Number of outgoing GTP data packets on the N3 interface",
 },
+[UPF_METR_GLOB_CTR_GTPU_ECHO_REQUESTS] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "upf_gtpu_echo_requests_total",
+    .description = "Number of GTP-U Echo Requests received",
+},
+[UPF_METR_GLOB_CTR_GTPU_ECHO_RESPONSES_SENT] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "upf_gtpu_echo_responses_sent_total",
+    .description = "Number of GTP-U Echo Responses successfully sent",
+},
+[UPF_METR_GLOB_CTR_GTPU_UNKNOWN_TEID_PACKETS] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "upf_gtpu_unknown_teid_packets_total",
+    .description = "Number of G-PDUs dropped because their TEID was unknown",
+},
+[UPF_METR_GLOB_CTR_GTPU_UNMATCHED_PDR_PACKETS] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "upf_gtpu_unmatched_pdr_packets_total",
+    .description = "Number of G-PDUs dropped because no PDR matched",
+},
+[UPF_METR_GLOB_CTR_GTPU_ERROR_INDICATIONS_TRIGGERED] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "upf_gtpu_error_indications_triggered_total",
+    .description = "Number of received packets that triggered a GTP-U Error Indication",
+},
+[UPF_METR_GLOB_CTR_GTPU_MALFORMED_PACKETS] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "upf_gtpu_malformed_packets_total",
+    .description = "Number of malformed or unsupported GTP-U packets dropped",
+},
+[UPF_METR_GLOB_CTR_GTPU_SOURCE_SPOOFING_DROPS] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "upf_gtpu_source_spoofing_drops_total",
+    .description = "Number of G-PDUs dropped by UE source-address validation",
+},
 [UPF_METR_GLOB_CTR_SM_N4SESSIONESTABREQ] = {
     .type = OGS_METRICS_METRIC_TYPE_COUNTER,
     .name = "fivegs_upffunction_sm_n4sessionestabreq",
