@@ -117,6 +117,11 @@ upf_metrics_spec_def_t upf_metrics_spec_def_global[_UPF_METR_GLOB_MAX] = {
     .name = "fivegs_upffunction_upf_sessionnbr",
     .description = "Active Sessions",
 },
+[UPF_METR_GLOB_GAUGE_SESSIONS_ACTIVE] = {
+    .type = OGS_METRICS_METRIC_TYPE_GAUGE,
+    .name = "upf_sessions_active",
+    .description = "Current number of active PFCP sessions in this UPF",
+},
 [UPF_METR_GLOB_GAUGE_PFCP_PEERS_ACTIVE] = {
     .type = OGS_METRICS_METRIC_TYPE_GAUGE,
     .name = "pfcp_peers_active",
